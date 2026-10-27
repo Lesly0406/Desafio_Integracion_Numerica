@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Integración Numérica - Métodos Numéricos La Paz</title>
+    <!-- Tailwind CSS CDN para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN para gráficos visuales -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- math.js para la evaluación flexible de expresiones matemáticas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+</head>
+
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <!-- Navbar Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-sky-400">Integración Numérica Multimétodo</h1>
+                <p class="text-xs text-slate-400">Solucionario y Calculadora Intercativa para Problemas de La Paz</p>
+            </div>
+            <!-- Selector de Ejercicios Preconfigurados -->
+            <div class="flex items-center gap-2">
+                <label for="preset-select" class="text-sm font-semibold text-slate-300">Cargar Ejercicio:</label>
+                <select id="preset-select"
+                    class="bg-slate-700 text-white border border-slate-600 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <option value="test">Validación: f(x) = x² en [0, 2]</option>
+                    <option value="ex19">Ejercicio 19: Vehículo (Distancia)</option>
+                    <option value="ex20">Ejercicio 20: Banda Elástica (Trabajo)</option>
+                    <option value="ex21">Ejercicio 21: Perfil Topográfico</option>
+                    <option value="ex22">Ejercicio 22: Catenaria (Longitud Cable)</option>
+                    <option value="ex23">Ejercicio 23: Tubería (Caudal)</option>
+                    <option value="ex24">Ejercicio 24: Cardioide (Longitud Arco)</option>
+                    <option value="ex25">Ejercicio 25: Satélite (Energía Potencial)</option>
+                    <option value="ex27">Ejercicio 27: Elipsoide (Volumen y Área)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Panel Izquierdo: Controles de Entrada -->
+        <section class="lg:col-span-5 bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-xl space-y-5">
+            <h2 class="text-lg font-bold text-sky-400 border-b border-slate-700 pb-2">Configuración de Datos</h2>
+
+            <!-- Selector de Modo: Función o Tabla -->
+            <div class="flex rounded-md bg-slate-700 p-1">
+                <button id="btn-mode-func" onclick="setMode('func')"
+                    class="flex-1 py-1.5 text-sm font-medium rounded bg-sky-600 text-white transition">Por Función
+                    f(x)</button>
+                <button id="btn-mode-table" onclick="setMode('table')"
+                    class="flex-1 py-1.5 text-sm font-medium rounded text-slate-300 hover:text-white transition">Por
+                    Tabla (x, y)</button>
+            </div>
+
+            <!-- Formulario de Entrada: Función -->
+            <div id="section-func" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Función f(x) ó integrand(x)</label>
+                    <input type="text" id="func-input" value="x^2"
+                        class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm font-mono text-sky-300 focus:ring-2 focus:ring-sky-500 outline-none">
+                    <p class="text-[11px] text-slate-400 mt-1">Soporta: cosh(x), sin(x), sqrt(x), ^, pi, etc.</p>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Límite a</label>
+                        <input type="number" step="any" id="limit-a" value="0"
+                            class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Límite b</label>
+                        <input type="number" step="any" id="limit-b" value="2"
+                            class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Subintervalos (n)</label>
+                        <input type="number" id="num-n" value="4" min="1"
+                            class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-center">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Entrada: Tabla -->
+            <div id="section-table" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Valores de X (separados por
+                        coma)</label>
+                    <textarea id="table-x" rows="2"
+                        class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs font-mono text-sky-300 outline-none">0, 1, 2, 3, 4, 5, 6, 7</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Valores de Y (separados por
+                        coma)</label>
+                    <textarea id="table-y" rows="2"
+                        class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs font-mono text-emerald-300 outline-none">0, 14, 39, 69, 95, 114, 129, 139</textarea>
+                </div>
+            </div>
+
+            <!-- Parámetros Adicionales / Factores de Escala -->
+            <div class="border-t border-slate-700 pt-3 space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Factor Divisor (ej. 3600)</label>
+                        <input type="number" step="any" id="scale-factor" value="1"
+                            class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-center">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Multiplicador (ej. π)</label>
+                        <input type="number" step="any" id="mult-factor" value="1"
+                            class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-center">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Valor de Referencia / Analítico
+                        Exacto (Opcional)</label>
+                    <input type="number" step="any" id="ref-val" value="2.66666667" placeholder="Ej. 2.666667"
+                        class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-center">
+                </div>
+            </div>
+
+            <!-- Botón de Cálculo -->
+            <button onclick="calculate()"
+                class="w-full bg-sky-600 hover:bg-sky-500 font-bold py-2.5 rounded-lg text-white transition shadow-lg flex items-center justify-center gap-2">
+                <span>Ejecutar Integración Numérica</span>
+            </button>
+
+            <!-- Alertas de Validación -->
+            <div id="alert-box"
+                class="hidden p-3 bg-rose-900/50 border border-rose-500 text-rose-200 text-xs rounded-lg"></div>
+        </section>
+
+        <!-- Panel Derecho: Resultados y Gráficos -->
+        <section class="lg:col-span-7 space-y-6">
+            <!-- Tarjetas de Métodos y Resultados -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Trapecio Card -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Trapecio Compuesto</div>
+                    <div id="res-trap" class="text-xl font-bold text-sky-400 my-1">-</div>
+                    <div id="err-trap" class="text-[11px] text-slate-400">Error: -</div>
+                </div>
+                <!-- Simpson 1/3 Card -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Simpson 1/3</div>
+                    <div id="res-simp13" class="text-xl font-bold text-emerald-400 my-1">-</div>
+                    <div id="err-simp13" class="text-[11px] text-slate-400">Error: -</div>
+                </div>
+                <!-- Simpson 3/8 ó Combinado Card -->
+                <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-md">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Simpson 3/8 / Comb.</div>
+                    <div id="res-simp38" class="text-xl font-bold text-amber-400 my-1">-</div>
+                    <div id="err-simp38" class="text-[11px] text-slate-400">Error: -</div>
+                </div>
+            </div>
+
+            <!-- Gráfico del Área e Integrando -->
+            <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-300 mb-3">Representación Gráfica del Integrando y Área</h3>
+                <div class="relative w-full h-64">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabla de Nodos y Factores de Peso -->
+            <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-xl overflow-hidden">
+                <h3 class="text-sm font-bold text-slate-300 mb-3">Tabla de Nodos Digitilizados y Evaluaciones <span
+                        class="math">(xᵢ, yᵢ)</span></h3>
+                <div class="max-h-48 overflow-y-auto">
+                    <table class="w-full text-xs text-left text-slate-300">
+                        <thead class="bg-slate-700 text-slate-200 sticky top-0">
+                            <tr>
+                                <th class="p-2">i</th>
+                                <th class="p-2">x<sub>i</sub></th>
+                                <th class="p-2">f(x<sub>i</sub>)</th>
+                                <th class="p-2">Peso Trapecio</th>
+                                <th class="p-2">Peso S 1/3</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nodes-table-body" class="divide-y divide-slate-700 font-mono">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Script de Lógica Numérica e Interacción -->
+    <script>
+        let currentMode = 'func';
+        let chartInstance = null;
+
+        const presets = {
+            test: { mode: 'func', func: 'x^2', a: 0, b: 2, n: 4, scale: 1, mult: 1, ref: 2.66666667 },
+            ex19: { mode: 'table', x: "0, 1, 2, 3, 4, 5, 6, 7", y: "0, 14, 39, 69, 95, 114, 129, 139", scale: 3600, mult: 1, ref: 0.147072 },
+            ex20: { mode: 'table', x: "0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8", y: "0, 0.85, 1.30, 1.60, 1.87, 2.14, 2.34, 2.52", scale: 1, mult: 1, ref: 4.577167 },
+            ex21: { mode: 'table', x: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10", y: "1.3, 3.7, 4.6, 4.4, 2.7, 2.5, 3.6, 5.3, 6.0, 5.9", scale: 1, mult: 1, ref: 36.85 },
+            ex22: { mode: 'func', func: 'cosh(x/24)', a: -12, b: 26, n: 8, scale: 1, mult: 1, ref: 43.898841 },
+            ex23: { mode: 'func', func: '160 * pi * x * (1 - x/0.25)^(1/7)', a: 0, b: 0.25, n: 8, scale: 1, mult: 1, ref: 12.828170 },
+            ex24: { mode: 'func', func: '20 * sin(x/2)', a: 0, b: 6.283185307, n: 8, scale: 1, mult: 1, ref: 80.000000 },
+            ex25: { mode: 'func', func: '(500 * 9.81 * 6371000^2) / (6371000 + x)^2', a: 0, b: 800000, n: 8, scale: 1, mult: 1, ref: 3486236787 },
+            ex27: { mode: 'table', x: "0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0", y: "0, 1.3, 1.6, 2.4, 2.8, 3.0, 3.1, 3.0, 2.8, 2.4, 1.65, 1.3, 0", scale: 1, mult: 3.1415926535 * 0.25, ref: 201.842092 }
+        };
+
+        document.getElementById('preset-select').addEventListener('change', (e) => {
+            const p = presets[e.target.value];
+            if (!p) return;
+            setMode(p.mode);
+            if (p.mode === 'func') {
+                document.getElementById('func-input').value = p.func;
+                document.getElementById('limit-a').value = p.a;
+                document.getElementById('limit-b').value = p.b;
+                document.getElementById('num-n').value = p.n;
+            } else {
+                document.getElementById('table-x').value = p.x;
+                document.getElementById('table-y').value = p.y;
+            }
+            document.getElementById('scale-factor').value = p.scale || 1;
+            document.getElementById('mult-factor').value = p.mult || 1;
+            document.getElementById('ref-val').value = p.ref !== undefined ? p.ref : '';
+            calculate();
+        });
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'func') {
+                document.getElementById('section-func').classList.remove('hidden');
+                document.getElementById('section-table').classList.add('hidden');
+                document.getElementById('btn-mode-func').className = "flex-1 py-1.5 text-sm font-medium rounded bg-sky-600 text-white transition";
+                document.getElementById('btn-mode-table').className = "flex-1 py-1.5 text-sm font-medium rounded text-slate-300 hover:text-white transition";
+            } else {
+                document.getElementById('section-func').classList.add('hidden');
+                document.getElementById('section-table').classList.remove('hidden');
+                document.getElementById('btn-mode-table').className = "flex-1 py-1.5 text-sm font-medium rounded bg-sky-600 text-white transition";
+                document.getElementById('btn-mode-func').className = "flex-1 py-1.5 text-sm font-medium rounded text-slate-300 hover:text-white transition";
+            }
+        }
+
+        function showAlert(msg) {
+            const box = document.getElementById('alert-box');
+            box.innerText = msg;
+            box.classList.remove('hidden');
+        }
+
+        function hideAlert() {
+            document.getElementById('alert-box').classList.add('hidden');
+        }
+
+        function calculate() {
+            hideAlert();
+            let X = [], Y = [];
+            const scale = parseFloat(document.getElementById('scale-factor').value) || 1;
+            const mult = parseFloat(document.getElementById('mult-factor').value) || 1;
+            const refVal = parseFloat(document.getElementById('ref-val').value);
+
+            if (currentMode === 'func') {
+                const expr = document.getElementById('func-input').value;
+                const a = parseFloat(document.getElementById('limit-a').value);
+                const b = parseFloat(document.getElementById('limit-b').value);
+                const n = parseInt(document.getElementById('num-n').value);
+
+                if (isNaN(a) || isNaN(b) || isNaN(n) || n < 1) {
+                    showAlert("Por favor ingrese límites válidos y n ≥ 1.");
+                    return;
+                }
+
+                const h = (b - a) / n;
+                try {
+                    const compiled = math.compile(expr);
+                    for (let i = 0; i <= n; i++) {
+                        let xi = a + i * h;
+                        let yi = compiled.evaluate({ x: xi });
+                        X.push(xi);
+                        Y.push(yi);
+                    }
+                } catch (e) {
+                    showAlert("Error al evaluar la función matemática: " + e.message);
+                    return;
+                }
+            } else {
+                const rawX = document.getElementById('table-x').value.split(',').map(v => parseFloat(v.trim()));
+                const rawY = document.getElementById('table-y').value.split(',').map(v => parseFloat(v.trim()));
+
+                if (rawX.length !== rawY.length || rawX.length < 2) {
+                    showAlert("Las listas de X e Y deben tener la misma cantidad de elementos (mínimo 2).");
+                    return;
+                }
+                for (let i = 0; i < rawX.length; i++) {
+                    if (isNaN(rawX[i]) || isNaN(rawY[i])) {
+                        showAlert("Todos los datos de la tabla deben ser numéricos.");
+                        return;
+                    }
+                }
+                X = rawX;
+                Y = rawY;
+            }
+
+            const n = X.length - 1;
+            const h = (X[n] - X[0]) / n;
+
+            // Validación de espaciamiento uniforme
+            for (let i = 0; i < n; i++) {
+                let diff = X[i + 1] - X[i];
+                if (Math.abs(diff - h) > 1e-4) {
+                    showAlert(`Advertencia: Los datos no presentan espaciamiento uniforme. h variable detectado cerca de x=${X[i]}.`);
+                    break;
+                }
+            }
+
+            // --- TRAPECIO COMPUESTO ---
+            let sumTrap = 0.5 * Y[0] + 0.5 * Y[n];
+            for (let i = 1; i < n; i++) sumTrap += Y[i];
+            let valTrap = (h * sumTrap * mult) / scale;
+
+            // --- SIMPSON 1/3 ---
+            let valSimp13 = null;
+            let simp13Weights = [];
+            if (n % 2 === 0) {
+                let sumS13 = Y[0] + Y[n];
+                simp13Weights.push(1);
+                for (let i = 1; i < n; i++) {
+                    let w = (i % 2 === 1) ? 4 : 2;
+                    sumS13 += w * Y[i];
+                    simp13Weights.push(w);
+                }
+                simp13Weights.push(1);
+                valSimp13 = ((h / 3) * sumS13 * mult) / scale;
+            }
+
+            // --- SIMPSON 3/8 O COMBINADO ---
+            let valSimp38 = null;
+            if (n % 3 === 0) {
+                let sumS38 = Y[0] + Y[n];
+                for (let i = 1; i < n; i++) {
+                    let w = (i % 3 === 0) ? 2 : 3;
+                    sumS38 += w * Y[i];
+                }
+                valSimp38 = (((3 * h) / 8) * sumS38 * mult) / scale;
+            } else if (n === 7) {
+                // Combinado: 4 subintervalos 1/3 + 3 subintervalos 3/8
+                let sum13 = Y[0] + Y[4] + 4 * (Y[1] + Y[3]) + 2 * Y[2];
+                let I1 = (h / 3) * sum13;
+                let sum38 = Y[4] + Y[7] + 3 * (Y[5] + Y[6]);
+                let I2 = ((3 * h) / 8) * sum38;
+                valSimp38 = ((I1 + I2) * mult) / scale;
+            }
+
+            // Actualizar Interfaz
+            document.getElementById('res-trap').innerText = valTrap.toFixed(6);
+            document.getElementById('res-simp13').innerText = valSimp13 !== null ? valSimp13.toFixed(6) : "Req. n Par";
+            document.getElementById('res-simp38').innerText = valSimp38 !== null ? valSimp38.toFixed(6) : "N/A";
+
+            // Cálculos de Error
+            if (!isNaN(refVal) && refVal !== 0) {
+                let errT = (Math.abs(valTrap - refVal) / Math.abs(refVal)) * 100;
+                document.getElementById('err-trap').innerText = `Error Rel: ${errT.toFixed(4)}%`;
+                if (valSimp13 !== null) {
+                    let errS13 = (Math.abs(valSimp13 - refVal) / Math.abs(refVal)) * 100;
+                    document.getElementById('err-simp13').innerText = `Error Rel: ${errS13.toFixed(4)}%`;
+                } else {
+                    document.getElementById('err-simp13').innerText = "Error: N/A";
+                }
+                if (valSimp38 !== null) {
+                    let errS38 = (Math.abs(valSimp38 - refVal) / Math.abs(refVal)) * 100;
+                    document.getElementById('err-simp38').innerText = `Error Rel: ${errS38.toFixed(4)}%`;
+                } else {
+                    document.getElementById('err-simp38').innerText = "Error: N/A";
+                }
+            } else {
+                document.getElementById('err-trap').innerText = "Sin ref. exacta";
+                document.getElementById('err-simp13').innerText = "Sin ref. exacta";
+                document.getElementById('err-simp38').innerText = "Sin ref. exacta";
+            }
+
+            // Llenar Tabla de Nodos
+            const tbody = document.getElementById('nodes-table-body');
+            tbody.innerHTML = '';
+            for (let i = 0; i <= n; i++) {
+                let wT = (i === 0 || i === n) ? 0.5 : 1.0;
+                let wS = (n % 2 === 0) ? (simp13Weights[i] || '-') : '-';
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-2">${i}</td><td class="p-2">${X[i].toFixed(4)}</td><td class="p-2">${Y[i].toFixed(6)}</td><td class="p-2">${wT}</td><td class="p-2">${wS}</td>`;
+                tbody.appendChild(tr);
+            }
+
+            // Renderizar Gráfico
+            renderChart(X, Y);
+        }
+
+        function renderChart(X, Y) {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: X.map(v => v.toFixed(2)),
+                    datasets: [{
+                        label: 'Integrando f(x)',
+                        data: Y,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.25)',
+                        fill: true,
+                        tension: 0.2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0284c7'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+
+        // Ejecución Inicial
+        window.onload = () => calculate();
+    </script>
+</body>
+
+</html>
